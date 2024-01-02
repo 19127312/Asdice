@@ -94,7 +94,10 @@ public class DiceAnimation : MonoBehaviour
     {
         cancellationTokenSource.Cancel();
         currentTime = 0f;
-        rb.angularVelocity = Vector3.zero;
+        if (rb != null)
+        {
+            rb.angularVelocity = Vector3.zero;
+        }
         isSecondPhase = false;
         isFirstPhase = false;
     }

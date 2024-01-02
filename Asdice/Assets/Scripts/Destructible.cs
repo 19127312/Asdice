@@ -43,23 +43,34 @@ public class Destructible : MonoBehaviour
     //Explode
     public void SelfExplode()
     {
+        audioSource.PlayOneShot(destructionClip);
         Destroy(body);
 
         objectRenderer.enabled = false;
         objectCollider.enabled = false;
-        audioSource.PlayOneShot(destructionClip);
 
         GameObject brokenObject = Instantiate(brokenPrefab, transform.position, transform.rotation); ;
         Rigidbody[] rigidbodies = brokenObject.GetComponentsInChildren<Rigidbody>();
+
+        if (transform.childCount > 0)
+        {
+            Transform[] transformChildren = gameObject.GetComponentsInChildren<Transform>();
+            foreach(Transform transformChild in transformChildren)
+            {
+                Destroy(transformChild.gameObject);
+            }
+        }
+        
         foreach (Rigidbody childBody in rigidbodies)
         {
             childBody.velocity = body.velocity;
             childBody.AddExplosionForce(force, transform.position, radius);
         }
-        FadeOutRigidBodies(rigidbodies).Forget();
+
+        FadeOutRigidBodies(rigidbodies, brokenObject).Forget();
     }
 
-    private async UniTask FadeOutRigidBodies(Rigidbody[] rigidbodies)
+    private async UniTask FadeOutRigidBodies(Rigidbody[] rigidbodies, GameObject brokenObject)
     {
         await UniTask.Delay(TimeSpan.FromSeconds(PieceSleepDelay), ignoreTimeScale: false);
         int activeRigidBodies = rigidbodies.Length;
@@ -99,7 +110,7 @@ public class Destructible : MonoBehaviour
             Destroy(renderer.gameObject);
         }
 
-        Destroy(gameObject);
+        Destroy(brokenObject);
     }
 
 
