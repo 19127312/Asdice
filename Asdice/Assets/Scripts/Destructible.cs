@@ -39,7 +39,20 @@ public class Destructible : MonoBehaviour
 
     [SerializeField]
     private float PieceSleepDelay = 0.5f;
-    
+
+    [SerializeField]
+    private DiceAnimation diceAnimation;
+
+    private void Awake()
+    {
+        diceAnimation.OnDiceLongPress += SelfExplode;
+    }
+
+    private void OnDestroy()
+    {
+        diceAnimation.OnDiceLongPress -= SelfExplode;
+    }
+
     //Explode
     public void SelfExplode()
     {
@@ -74,6 +87,7 @@ public class Destructible : MonoBehaviour
     {
         await UniTask.Delay(TimeSpan.FromSeconds(PieceSleepDelay), ignoreTimeScale: false);
         int activeRigidBodies = rigidbodies.Length;
+
         while (activeRigidBodies > 0)
         {
             await UniTask.Yield();
@@ -85,9 +99,11 @@ public class Destructible : MonoBehaviour
                 }
             }
         }
+
         await UniTask.Delay(TimeSpan.FromSeconds(fadeDelay), ignoreTimeScale: false);
         float time = 0f;
         Renderer[] renderers = Array.ConvertAll(rigidbodies, GetRenderersFromRigidBodies);
+
         foreach (Rigidbody childBody in rigidbodies)
         {
             Destroy(childBody.GetComponent<Collider>());
@@ -97,15 +113,17 @@ public class Destructible : MonoBehaviour
         while (time < 1)
         {
             float step = Time.deltaTime * fadeSpeed;
-            foreach(Renderer renderer in renderers)
+
+            foreach (Renderer renderer in renderers)
             {
-                renderer.transform.Translate(Vector3.down * (step / renderer.bounds.size.y), Space.World);
+                renderer?.transform.Translate(Vector3.down * (step / renderer.bounds.size.y), Space.World);
             }
+
             time += step;
             await UniTask.Yield();
         }
 
-        foreach(Renderer renderer in renderers)
+        foreach (Renderer renderer in renderers)
         {
             Destroy(renderer.gameObject);
         }

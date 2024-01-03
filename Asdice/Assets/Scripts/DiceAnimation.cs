@@ -1,15 +1,12 @@
 using Cysharp.Threading.Tasks;
-using DG.Tweening;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 
 public class DiceAnimation : MonoBehaviour
 {
-    public float rotationSpeed = 30f; // Degrees per second
+    [SerializeField]
+    private float rotationSpeed = 30f; // Degrees per second
 
     [SerializeField]
     private float initialAngular = 10;
@@ -26,9 +23,6 @@ public class DiceAnimation : MonoBehaviour
     [SerializeField]
     private Rigidbody rb;
 
-    [SerializeField]
-    private Destructible destructible;
-
     private CancellationTokenSource cancellationTokenSource;
     private float currentTime = 0f;
     private float firstPhaseTime = 0;
@@ -38,6 +32,18 @@ public class DiceAnimation : MonoBehaviour
 
     //Event for long press
     public event Action OnDiceLongPress;
+
+    //Event for long press
+    public event Action OnPressed;
+
+    //Event for long press
+    public event Action OnFirstPhase;
+
+    //Event for long press
+    public event Action OnSecondPhase;
+
+    //Event for long press
+    public event Action OnDeselected;
 
     private void Awake()
     {
@@ -50,6 +56,9 @@ public class DiceAnimation : MonoBehaviour
     /// </summary>
     public void OnPressedDice()
     {
+        OnPressed?.Invoke();
+        rb.useGravity = false;
+        transform.position += new Vector3 (0, 1.5f, 0);
         cancellationTokenSource = new CancellationTokenSource();
         rb.maxAngularVelocity = initialAngular;
         rb.AddTorque(RandomVector3() * rotationSpeed, ForceMode.Impulse);
@@ -65,19 +74,21 @@ public class DiceAnimation : MonoBehaviour
             if (currentTime >= timeToRotate)
             {
                 OnDeselectDice();
-                destructible.SelfExplode();
+                OnDiceLongPress?.Invoke();
             }
             else if (currentTime >= secondPhaseTime && !isSecondPhase)
             {
                 rb.maxAngularVelocity = secondPhaseSpeedModifier;
                 rb.AddTorque(rotationSpeed * secondPhaseSpeedModifier * RandomVector3(), ForceMode.Impulse);
                 isSecondPhase = true;
+                OnSecondPhase?.Invoke();
             }
             else if (currentTime >= firstPhaseTime && !isFirstPhase)
             {
                 rb.maxAngularVelocity = firstPhaseSpeedModifier;
                 rb.AddTorque(firstPhaseSpeedModifier * rotationSpeed * RandomVector3(), ForceMode.Impulse);
                 isFirstPhase = true;
+                OnFirstPhase?.Invoke();
             }
         }
     }
@@ -92,13 +103,16 @@ public class DiceAnimation : MonoBehaviour
     /// </summary>
     public void OnDeselectDice()
     {
+        OnDeselected?.Invoke();
         cancellationTokenSource.Cancel();
         currentTime = 0f;
+        isSecondPhase = false;
+        isFirstPhase = false;
+
         if (rb != null)
         {
             rb.angularVelocity = Vector3.zero;
+            rb.useGravity = true;   
         }
-        isSecondPhase = false;
-        isFirstPhase = false;
     }
 }
