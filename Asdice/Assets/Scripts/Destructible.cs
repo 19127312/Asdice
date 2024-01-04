@@ -7,9 +7,6 @@ using UnityEngine;
 [RequireComponent(typeof(AudioSource))]
 public class Destructible : MonoBehaviour
 {
-    [SerializeField] 
-    private AudioSource audioSource;
-
     [SerializeField]
     private MeshRenderer objectRenderer;
 
@@ -21,9 +18,6 @@ public class Destructible : MonoBehaviour
 
     [SerializeField]
     private GameObject brokenPrefab;
-
-    [SerializeField]
-    private AudioClip destructionClip;
 
     [SerializeField]
     private float force = 1000f;
@@ -56,7 +50,6 @@ public class Destructible : MonoBehaviour
     //Explode
     public void SelfExplode()
     {
-        audioSource.PlayOneShot(destructionClip);
         Destroy(body);
 
         objectRenderer.enabled = false;
@@ -68,9 +61,10 @@ public class Destructible : MonoBehaviour
         if (transform.childCount > 0)
         {
             Transform[] transformChildren = gameObject.GetComponentsInChildren<Transform>();
-            foreach(Transform transformChild in transformChildren)
+            foreach (Transform transformChild in transformChildren)
             {
-                Destroy(transformChild.gameObject);
+                if (transformChild != transform)
+                    Destroy(transformChild.gameObject);
             }
         }
         
@@ -116,7 +110,10 @@ public class Destructible : MonoBehaviour
 
             foreach (Renderer renderer in renderers)
             {
-                renderer?.transform.Translate(Vector3.down * (step / renderer.bounds.size.y), Space.World);
+                if (renderer != null)
+                {
+                    renderer.transform.Translate(Vector3.down * (step / renderer.bounds.size.y), Space.World);
+                }
             }
 
             time += step;
@@ -129,6 +126,7 @@ public class Destructible : MonoBehaviour
         }
 
         Destroy(brokenObject);
+        Destroy(gameObject);
     }
 
 

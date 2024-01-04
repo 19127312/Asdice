@@ -12,9 +12,9 @@ public class DiceManager : MonoBehaviour
 
     private void Update()
     {
-        if (rb.velocity.magnitude == 0 && rb.angularVelocity == Vector3.zero)
-        {
-            Debug.Log(diceCheck.CurrentNumber);
-        }
+        //if (rb.velocity.magnitude == 0 && rb.angularVelocity == Vector3.zero)
+        //{
+        //    Debug.Log(diceCheck.CurrentNumber);
+        //}
     }
 }
