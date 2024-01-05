@@ -20,19 +20,16 @@ public class Destructible : MonoBehaviour
     private GameObject brokenPrefab;
 
     [SerializeField]
+    private Shockwave shockwavePrefab;
+
+    [SerializeField]
     private float force = 1000f;
 
     [SerializeField]
     private float radius = 5f;
 
     [SerializeField]
-    private float fadeSpeed = 0.25f;
-
-    [SerializeField]
     private float fadeDelay = 2f;
-
-    [SerializeField]
-    private float PieceSleepDelay = 0.5f;
 
     [SerializeField]
     private DiceAnimation diceAnimation;
@@ -56,6 +53,9 @@ public class Destructible : MonoBehaviour
         objectCollider.enabled = false;
 
         GameObject brokenObject = Instantiate(brokenPrefab, transform.position, transform.rotation); ;
+        Shockwave shockwave = Instantiate(shockwavePrefab, transform.position, new Quaternion(0,0,0,0));
+        shockwave.Blast().Forget();
+
         Rigidbody[] rigidbodies = brokenObject.GetComponentsInChildren<Rigidbody>();
 
         if (transform.childCount > 0)
@@ -74,64 +74,20 @@ public class Destructible : MonoBehaviour
             childBody.AddExplosionForce(force, transform.position, radius);
         }
 
-        FadeOutRigidBodies(rigidbodies, brokenObject).Forget();
+        FadeOutRigidBodies(rigidbodies, brokenObject, shockwave).Forget();
     }
 
-    private async UniTask FadeOutRigidBodies(Rigidbody[] rigidbodies, GameObject brokenObject)
+    private async UniTask FadeOutRigidBodies(Rigidbody[] rigidbodies, GameObject brokenObject, Shockwave shockwave)
     {
-        await UniTask.Delay(TimeSpan.FromSeconds(PieceSleepDelay), ignoreTimeScale: false);
-        int activeRigidBodies = rigidbodies.Length;
-
-        while (activeRigidBodies > 0)
-        {
-            await UniTask.Yield();
-            foreach (Rigidbody childBody in rigidbodies)
-            {
-                if (childBody.IsSleeping())
-                {
-                    activeRigidBodies--;
-                }
-            }
-        }
-
         await UniTask.Delay(TimeSpan.FromSeconds(fadeDelay), ignoreTimeScale: false);
-        float time = 0f;
-        Renderer[] renderers = Array.ConvertAll(rigidbodies, GetRenderersFromRigidBodies);
 
         foreach (Rigidbody childBody in rigidbodies)
         {
-            Destroy(childBody.GetComponent<Collider>());
-            Destroy(childBody);
-        }
-
-        while (time < 1)
-        {
-            float step = Time.deltaTime * fadeSpeed;
-
-            foreach (Renderer renderer in renderers)
-            {
-                if (renderer != null)
-                {
-                    renderer.transform.Translate(Vector3.down * (step / renderer.bounds.size.y), Space.World);
-                }
-            }
-
-            time += step;
-            await UniTask.Yield();
-        }
-
-        foreach (Renderer renderer in renderers)
-        {
-            Destroy(renderer.gameObject);
+            Destroy(childBody.gameObject);
         }
 
         Destroy(brokenObject);
         Destroy(gameObject);
-    }
-
-
-    private Renderer GetRenderersFromRigidBodies(Rigidbody rid)
-    {
-        return rid.GetComponent<Renderer>();
+        Destroy(shockwave.gameObject);
     }
 }

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using Lean.Common;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -23,12 +24,32 @@ public class DiceAnimation : MonoBehaviour
     [SerializeField]
     private Rigidbody rb;
 
+    [SerializeField]
+    private LeanSelectable lean;
+
     private CancellationTokenSource cancellationTokenSource;
     private float currentTime = 0f;
     private float firstPhaseTime = 0;
     private float secondPhaseTime = 0;
     private bool isFirstPhase = false;
     private bool isSecondPhase = false;
+    private bool isAbleToPress = true;
+
+    public bool IsAbleToPress
+    {
+        set 
+        { 
+            isAbleToPress = value; 
+        }
+    }
+
+    public bool SetDiceLean
+    {
+        set
+        {
+            lean.enabled = value;
+        }
+    }
 
     //Event for long press
     public event Action OnDiceLongPress;
@@ -56,12 +77,17 @@ public class DiceAnimation : MonoBehaviour
     /// </summary>
     public void OnPressedDice()
     {
+        if (!isAbleToPress) return;
+        isAbleToPress = false;
+
         OnPressed?.Invoke();
-        rb.useGravity = false;
+
         transform.position += new Vector3 (0, 1.5f, 0);
-        cancellationTokenSource = new CancellationTokenSource();
+        rb.useGravity = false;
         rb.maxAngularVelocity = initialAngular;
         rb.AddTorque(RandomVector3() * rotationSpeed, ForceMode.Impulse);
+
+        cancellationTokenSource = new CancellationTokenSource();
         UpdateTimer(cancellationTokenSource.Token).Forget();
     }
 
@@ -108,6 +134,7 @@ public class DiceAnimation : MonoBehaviour
         currentTime = 0f;
         isSecondPhase = false;
         isFirstPhase = false;
+        lean.enabled = false;
 
         if (rb != null)
         {
