@@ -34,6 +34,9 @@ public class Destructible : MonoBehaviour
     [SerializeField]
     private DiceAnimation diceAnimation;
 
+    [SerializeField]
+    private Dice dice;
+
     private void Awake()
     {
         diceAnimation.OnDiceLongPress += SelfExplode;
@@ -58,15 +61,15 @@ public class Destructible : MonoBehaviour
 
         Rigidbody[] rigidbodies = brokenObject.GetComponentsInChildren<Rigidbody>();
 
-        if (transform.childCount > 0)
-        {
-            Transform[] transformChildren = gameObject.GetComponentsInChildren<Transform>();
-            foreach (Transform transformChild in transformChildren)
-            {
-                if (transformChild != transform)
-                    Destroy(transformChild.gameObject);
-            }
-        }
+        //if (transform.childCount > 0)
+        //{
+        //    Transform[] transformChildren = gameObject.GetComponentsInChildren<Transform>();
+        //    foreach (Transform transformChild in transformChildren)
+        //    {
+        //        if (transformChild != transform)
+        //            Destroy(transformChild.gameObject);
+        //    }
+        //}
         
         foreach (Rigidbody childBody in rigidbodies)
         {
@@ -81,13 +84,8 @@ public class Destructible : MonoBehaviour
     {
         await UniTask.Delay(TimeSpan.FromSeconds(fadeDelay), ignoreTimeScale: false);
 
-        foreach (Rigidbody childBody in rigidbodies)
-        {
-            Destroy(childBody.gameObject);
-        }
-
+        dice.Despawn();
         Destroy(brokenObject);
-        Destroy(gameObject);
         Destroy(shockwave.gameObject);
     }
 }
